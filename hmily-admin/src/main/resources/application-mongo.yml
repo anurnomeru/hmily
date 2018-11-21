@@ -3,4 +3,4 @@ compensation:
       url : 192.168.1.68:27017
       dbName : happylife
       userName : xiaoyu
-      password : 123456
+      password : root

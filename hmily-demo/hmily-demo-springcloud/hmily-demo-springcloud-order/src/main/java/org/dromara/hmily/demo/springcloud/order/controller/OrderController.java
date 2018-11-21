@@ -47,7 +47,6 @@ public class OrderController {
     public String orderPay(@RequestParam(value = "count") Integer count,
                            @RequestParam(value = "amount") BigDecimal amount) {
         return orderService.orderPay(count, amount);
-
     }
 
     @PostMapping(value = "/mockInventoryWithTryException")

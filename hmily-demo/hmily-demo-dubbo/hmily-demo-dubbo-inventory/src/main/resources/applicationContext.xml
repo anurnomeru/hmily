@@ -81,7 +81,7 @@
                 <property name="mongoDbUrl"  value="192.168.1.68:27017"/>
                 <property name="mongoDbName" value="happylife"/>
                 <property name="mongoUserName" value="xiaoyu"/>
-                <property name="mongoUserPwd" value="123456"/>
+                <property name="mongoUserPwd" value="root"/>
             </bean>
         </property>
 

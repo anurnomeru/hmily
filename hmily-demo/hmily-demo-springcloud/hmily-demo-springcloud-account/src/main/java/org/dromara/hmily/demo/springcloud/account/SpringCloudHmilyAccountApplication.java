@@ -30,7 +30,10 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  *
  * @author xiaoyu
  */
-@SpringBootApplication(exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
+@SpringBootApplication(exclude = {
+    MongoAutoConfiguration.class,
+    MongoDataAutoConfiguration.class
+})
 @EnableDiscoveryClient
 @EnableFeignClients
 @EnableTransactionManagement
@@ -45,6 +48,4 @@ public class SpringCloudHmilyAccountApplication {
     public static void main(String[] args) {
         SpringApplication.run(SpringCloudHmilyAccountApplication.class, args);
     }
-
-
 }

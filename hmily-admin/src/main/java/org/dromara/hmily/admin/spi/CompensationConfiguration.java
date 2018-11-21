@@ -17,10 +17,17 @@
 
 package org.dromara.hmily.admin.spi;
 
-import com.google.common.base.Splitter;
-import com.mongodb.MongoCredential;
-import com.mongodb.ServerAddress;
-import com.zaxxer.hikari.HikariDataSource;
+import java.net.InetSocketAddress;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import javax.sql.DataSource;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
@@ -46,23 +53,15 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.data.mongodb.core.MongoClientFactoryBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import com.google.common.base.Splitter;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
+import com.zaxxer.hikari.HikariDataSource;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.JedisSentinelPool;
-
-import javax.sql.DataSource;
-import java.net.InetSocketAddress;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.ServiceLoader;
-import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * CompensationConfiguration.
@@ -85,13 +84,14 @@ public class CompensationConfiguration {
         @Bean
         public ObjectSerializer objectSerializer() {
             final SerializeEnum serializeEnum =
-                    SerializeEnum.acquire(env.getProperty("recover.serializer.support"));
+                SerializeEnum.acquire(env.getProperty("recover.serializer.support"));
             final ServiceLoader<ObjectSerializer> objectSerializers =
-                    ServiceBootstrap.loadAll(ObjectSerializer.class);
+                ServiceBootstrap.loadAll(ObjectSerializer.class);
             return StreamSupport.stream(objectSerializers.spliterator(), false)
-                    .filter(objectSerializer ->
-                            Objects.equals(objectSerializer.getScheme(), serializeEnum.getSerialize()))
-                    .findFirst().orElse(new KryoSerializer());
+                                .filter(objectSerializer ->
+                                    Objects.equals(objectSerializer.getScheme(), serializeEnum.getSerialize()))
+                                .findFirst()
+                                .orElse(new KryoSerializer());
         }
     }
 
@@ -160,30 +160,32 @@ public class CompensationConfiguration {
                 final String clusterUrl = env.getProperty("compensation.redis.clusterUrl");
                 assert clusterUrl != null;
                 final Set<HostAndPort> hostAndPorts = Splitter.on(";")
-                        .splitToList(clusterUrl).stream()
-                        .map(HostAndPort::parseString).collect(Collectors.toSet());
+                                                              .splitToList(clusterUrl)
+                                                              .stream()
+                                                              .map(HostAndPort::parseString)
+                                                              .collect(Collectors.toSet());
                 JedisCluster jedisCluster = new JedisCluster(hostAndPorts, config);
                 jedisClient = new JedisClientCluster(jedisCluster);
             } else if (sentinel) {
                 final String sentinelUrl = env.getProperty("compensation.redis.sentinelUrl");
                 assert sentinelUrl != null;
                 final Set<String> hostAndPorts =
-                        new HashSet<>(Splitter.on(";")
-                                .splitToList(sentinelUrl));
+                    new HashSet<>(Splitter.on(";")
+                                          .splitToList(sentinelUrl));
                 final String master = env.getProperty("compensation.redis.master");
                 JedisSentinelPool pool =
-                        new JedisSentinelPool(master, hostAndPorts,
-                                config, password);
+                    new JedisSentinelPool(master, hostAndPorts,
+                        config, password);
                 jedisClient = new JedisClientSentinel(pool);
             } else {
                 final String port = env.getProperty("compensation.redis.port", "6379");
                 final String hostName = env.getProperty("compensation.redis.hostName");
                 if (StringUtils.isNoneBlank(password)) {
                     jedisPool = new JedisPool(config, hostName,
-                            Integer.parseInt(port), 30, password);
+                        Integer.parseInt(port), 30, password);
                 } else {
                     jedisPool = new JedisPool(config, hostName,
-                            Integer.parseInt(port), 30);
+                        Integer.parseInt(port), 30);
                 }
                 jedisClient = new JedisClientSingle(jedisPool);
             }
@@ -207,7 +209,6 @@ public class CompensationConfiguration {
         public CompensationService fileTransactionRecoverService() {
             return new FileCompensationServiceImpl(objectSerializer);
         }
-
     }
 
     @Configuration
@@ -264,17 +265,21 @@ public class CompensationConfiguration {
             MongoClientFactoryBean clientFactoryBean = new MongoClientFactoryBean();
             final String userName = env.getProperty("compensation.mongo.userName", "xiaoyu");
             final String dbName = env.getProperty("compensation.mongo.dbName", "col");
-            final String password = env.getProperty("compensation.mongo.password", "123456");
+            final String password = env.getProperty("compensation.mongo.password", "root");
             final String url = env.getProperty("compensation.mongo.url", "127.0.0.1");
             MongoCredential credential = MongoCredential.createScramSha1Credential(
-                    userName,
-                    dbName,
-                    password.toCharArray());
-            clientFactoryBean.setCredentials(new MongoCredential[]{credential});
-            List<String> urls = Splitter.on(",").trimResults().splitToList(url);
+                userName,
+                dbName,
+                password.toCharArray());
+            clientFactoryBean.setCredentials(new MongoCredential[] {credential});
+            List<String> urls = Splitter.on(",")
+                                        .trimResults()
+                                        .splitToList(url);
             ServerAddress[] sds = new ServerAddress[urls.size()];
             for (int i = 0; i < sds.length; i++) {
-                List<String> adds = Splitter.on(":").trimResults().splitToList(urls.get(i));
+                List<String> adds = Splitter.on(":")
+                                            .trimResults()
+                                            .splitToList(urls.get(i));
                 InetSocketAddress address = new InetSocketAddress(adds.get(0), Integer.parseInt(adds.get(1)));
                 sds[i] = new ServerAddress(address);
             }
@@ -283,13 +288,11 @@ public class CompensationConfiguration {
             try {
                 clientFactoryBean.afterPropertiesSet();
                 mongoTemplate = new MongoTemplate(Objects.requireNonNull(clientFactoryBean.getObject()),
-                        dbName);
+                    dbName);
             } catch (Exception e) {
                 e.printStackTrace();
             }
             return new MongoCompensationServiceImpl(mongoTemplate);
         }
-
     }
-
 }

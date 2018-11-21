@@ -53,8 +53,8 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Autowired(required = false)
     public PaymentServiceImpl(OrderMapper orderMapper,
-                              AccountClient accountClient,
-                              InventoryClient inventoryClient) {
+        AccountClient accountClient,
+        InventoryClient inventoryClient) {
         this.orderMapper = orderMapper;
         this.accountClient = accountClient;
         this.inventoryClient = inventoryClient;
@@ -137,5 +137,4 @@ public class PaymentServiceImpl implements PaymentService {
         orderMapper.update(order);
         LOGGER.info("=========进行订单cancel操作完成================");
     }
-
 }

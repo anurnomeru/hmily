@@ -53,7 +53,4 @@ public class AccountController {
         return accountService.findByUserId(userId).getBalance();
     }
 
-
-
-
 }
