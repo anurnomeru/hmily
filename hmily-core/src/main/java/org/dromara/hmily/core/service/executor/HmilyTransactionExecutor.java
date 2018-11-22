@@ -248,7 +248,8 @@ public class HmilyTransactionExecutor {
             deleteTransaction(currentTransaction);
             return;
         }
-        final List<HmilyParticipant> hmilyParticipants = filterPoint(currentTransaction);
+
+        final List<HmilyParticipant> hmilyParticipants = this.filterPoint(currentTransaction);
         boolean success = true;
         List<HmilyParticipant> failList = Lists.newArrayListWithCapacity(hmilyParticipants.size());
         if (CollectionUtils.isNotEmpty(hmilyParticipants)) {
@@ -288,6 +289,7 @@ public class HmilyTransactionExecutor {
 
     private List<HmilyParticipant> filterPoint(final HmilyTransaction currentTransaction) {
         final List<HmilyParticipant> hmilyParticipants = currentTransaction.getHmilyParticipants();
+
         if (CollectionUtils.isNotEmpty(hmilyParticipants)) {
             if (currentTransaction.getStatus() == HmilyActionEnum.TRYING.getCode()
                     && currentTransaction.getRole() == HmilyRoleEnum.START.getCode()) {
